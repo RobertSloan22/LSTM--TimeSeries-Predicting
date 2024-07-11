@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    
+    <style>
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        .log-category {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center">Model Training Dashboard</h1>
+                <h3 id="countdown" class="text-center">Next retraining in: </h3>
+            </div>
+        </div>
+        <div class="card-body">
+            <img src="{{ url_for('static', filename='loss_plot.png') }}" alt="Training and Validation Loss" class="img-fluid">
+        <div class="container mt-5">
+            <h1 class="text-center">Billion Dollar Cat Rune Forecasting Realtime Database</h1>
+            <div class="row">
+                <div class="col-md-12">
+                    <img id="prediction-plot" src="{{ plot_url }}" class="img-fluid" alt="Prediction Plot">
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h2>Logs</h2>
+                    <div class="log-container border p-3">
+                        {% for log_type, log_entries in logs.items() %}
+                            <h5>{{ log_type }}</h5>
+                            {% for log_entry in log_entries %}
+                                <div class="log-entry">
+                                    <strong>{{ log_entry.timestamp }}:</strong> {{ log_entry.message }}
+                                </div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Logs</h2>
+
+                <div class="log-category">
+                    <h3>INFO</h3>
+                    <ul class="list-group" id="info-logs">
+                        {% for log in logs.INFO %}
+                        <li class="list-group-item">
+                            <strong>{{ log.timestamp }}:</strong> {{ log.message }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button class="btn btn-primary mt-2" id="show-more-info">Show More</button>
+                </div>
+
+                <div class="log-category">
+                    <h3>WARNING</h3>
+                    <ul class="list-group" id="warning-logs">
+                        {% for log in logs.WARNING %}
+                        <li class="list-group-item">
+                            <strong>{{ log.timestamp }}:</strong> {{ log.message }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button class="btn btn-warning mt-2" id="show-more-warning">Show More</button>
+                </div>
+
+                <div class="log-category">
+                    <h3>ERROR</h3>
+                    <ul class="list-group" id="error-logs">
+                        {% for log in logs.ERROR %}
+                        <li class="list-group-item">
+                            <strong>{{ log.timestamp }}:</strong> {{ log.message }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <button class="btn btn-danger mt-2" id="show-more-error">Show More</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Training and Validation Loss</h2>
+                <div id="loss-plot" style="width:100%;height:400px;"></div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Metrics</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <img src="{{ url_for('static', filename='loss_plot.png') }}" alt="Training and Validation Loss" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Model Predictions vs Validation Data</h2>
+                <div id="predictions-plot" style="width:100%;height:400px;"></div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Future Predictions</h2>
+                <div id="future-predictions-plot" style="width:100%;height:400px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="container mt-5">
+        <h1 class="text-center">Stock Price Prediction</h1>
+        <div class="row">
+            <div class="col-md-12">
+                <img id="prediction-plot" src="{{ plot_url }}" class="img-fluid" alt="Prediction Plot">
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h2>Logs</h2>
+                <div class="log-container border p-3">
+                    {% for log_type, log_entries in logs.items() %}
+                        <h5>{{ log_type }}</h5>
+                        {% for log_entry in log_entries %}
+                            <div class="log-entry">
+                                <strong>{{ log_entry.timestamp }}:</strong> {{ log_entry.message }}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <h1>Time Series Forecasting</h1>
+    <canvas id="forecastChart" width="400" height="200"></canvas>
+    <script>
+        fetch('/forecast')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [
+                        {
+                            label: 'Actual',
+                            data: data.values,
+                            borderColor: 'blue',
+                            fill: false
+                        },
+                        {
+                            label: 'Forecast',
+                            data: data.predictions,
+                            borderColor: 'red',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'hour',
+                                tooltipFormat: 'll HH:mm'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Price (sats)'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            socket.on('connect', function() {
+                console.log('Connected to server');
+            });
+
+            socket.on('future_predictions', function(data) {
+                var dates = data.dates;
+                var predictions = data.predictions;
+                var actuals = data.actuals;
+
+                var trace1 = {
+                    x: dates,
+                    y: actuals,
+                    mode: 'lines',
+                    name: 'Actual Prices',
+                    line: { color: 'blue' }
+                };
+
+                var trace2 = {
+                    x: dates,
+                    y: predictions,
+                    mode: 'lines',
+                    name: 'Predicted Prices',
+                    line: { color: 'red' }
+                };
+
+                var layout = {
+                    title: 'Price Prediction',
+                    xaxis: { title: 'Time' },
+                    yaxis: { title: 'Price' }
+                };
+
+                var data = [trace1, trace2];
+                Plotly.newPlot('prediction-plot', data, layout);
+            });
+
+            socket.on('next_run', function(data) {
+                console.log('Next scheduled run: ' + data.next_run);
+            });
+        });
+    </script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('training_progress', function(data) {
+            var epoch = data.epoch;
+            var loss = data.loss;
+            var val_loss = data.val_loss;
+
+            var trace1 = {
+                x: [epoch],
+                y: [loss],
+                mode: 'lines+markers',
+                name: 'Training Loss'
+            };
+
+            var trace2 = {
+                x: [epoch],
+                y: [val_loss],
+                mode: 'lines+markers',
+                name: 'Validation Loss'
+            };
+
+            var layout = {
+                title: 'Training and Validation Loss',
+                xaxis: { title: 'Epoch' },
+                yaxis: { title: 'Loss' }
+            };
+
+            Plotly.newPlot('loss-plot', [trace1, trace2], layout);
+        });
+
+        socket.on('future_predictions', function(data) {
+            var dates = data.dates;
+            var predictions = data.predictions;
+            var latest_data = data.latest_data;
+
+            var history_trace = {
+                x: Array.from({length: latest_data.length}, (_, i) => -latest_data.length + i + 1),
+                y: latest_data,
+                mode: 'lines+markers',
+                name: 'History'
+            };
+
+            var prediction_trace = {
+                x: Array.from({length: predictions.length}, (_, i) => i + 1),
+                y: predictions,
+                mode: 'lines+markers',
+                name: 'Predicted Future'
+            };
+
+            var layout = {
+                title: 'Future Predictions',
+                xaxis: { title: 'Time Steps' },
+                yaxis: { title: 'Price (USD)' }
+            };
+
+            Plotly.newPlot('future-predictions-plot', [history_trace, prediction_trace], layout);
+        });
+
+        socket.on('next_run', function(data) {
+            var nextRunTime = new Date(data.next_run);
+            updateCountdown(nextRunTime);
+        });
+
+        function updateCountdown(nextRunTime) {
+            var now = new Date();
+            var distance = nextRunTime - now;
+
+            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("countdown").innerHTML = "Next retraining in: " + days + "d " + hours + "h "
+            + minutes + "m " + seconds + "s ";
+
+            if (distance < 0) {
+                document.getElementById("countdown").innerHTML = "Retraining...";
+            } else {
+                setTimeout(function() {
+                    updateCountdown(nextRunTime);
+                }, 1000);
+            }
+        }
+
+        document.getElementById('show-more-info').addEventListener('click', function() {
+            toggleLogs('INFO');
+        });
+        document.getElementById('show-more-warning').addEventListener('click', function() {
+            toggleLogs('WARNING');
+        });
+        document.getElementById('show-more-error').addEventListener('click', function() {
+            toggleLogs('ERROR');
+        });
+
+        function toggleLogs(logType) {
+            var logList = document.getElementById(logType.toLowerCase() + '-logs');
+            var allLogs = logList.querySelectorAll('.list-group-item');
+            if (allLogs.length > 10) {
+                for (var i = 10; i < allLogs.length; i++) {
+                    if (allLogs[i].style.display === 'none') {
+                        allLogs[i].style.display = 'list-item';
+                    } else {
+                        allLogs[i].style.display = 'none';
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

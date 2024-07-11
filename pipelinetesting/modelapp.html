@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Time Series Forecasting</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Time Series Forecasting</h1>
+    <canvas id="forecastChart" width="400" height="200"></canvas>
+    <script>
+        fetch('/forecast')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.timestamps,
+                    datasets: [
+                        {
+                            label: 'Actual',
+                            data: data.values,
+                            borderColor: 'blue',
+                            fill: false
+                        },
+                        {
+                            label: 'Forecast',
+                            data: data.predictions,
+                            borderColor: 'red',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'hour',
+                                tooltipFormat: 'll HH:mm'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Price (sats)'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

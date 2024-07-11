@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Training Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center">Model Training Dashboard</h1>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Logs</h2>
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">INFO</div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for log in logs.INFO %}
+                            <li class="list-group-item">
+                                <strong>{{ log.timestamp }}:</strong> {{ log.message }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">WARNING</div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for log in logs.WARNING %}
+                            <li class="list-group-item">
+                                <strong>{{ log.timestamp }}:</strong> {{ log.message }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-header bg-danger text-white">ERROR</div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for log in logs.ERROR %}
+                            <li class="list-group-item">
+                                <strong>{{ log.timestamp }}:</strong> {{ log.message }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <h2>Metrics</h2>
+                <div id="loss-plot" style="width:100%;height:400px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('training_progress', function(data) {
+            var epoch = data.epoch;
+            var loss = data.loss;
+            var val_loss = data.val_loss;
+
+            var trace1 = {
+                x: [epoch],
+                y: [loss],
+                mode: 'lines+markers',
+                name: 'Training Loss'
+            };
+
+            var trace2 = {
+                x: [epoch],
+                y: [val_loss],
+                mode: 'lines+markers',
+                name: 'Validation Loss'
+            };
+
+            var data = [trace1, trace2];
+
+            var layout = {
+                title: 'Training and Validation Loss',
+                xaxis: { title: 'Epoch' },
+                yaxis: { title: 'Loss' }
+            };
+
+            Plotly.newPlot('loss-plot', data, layout);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+Flask
+Flask-SocketIO
+SQLAlchemy
+psycopg2-binary
+tensorflow
+scikit-learn
+xgboost
+matplotlib
+numpy
+pandas
+omnixai
+plotly

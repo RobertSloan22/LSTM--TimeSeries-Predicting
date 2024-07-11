@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Billion Dollar Cat Rune Forecasting Realtime Database</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <style>
+        .log-container {
+            max-height: 300px;
+            overflow-y: scroll;
+        }
+        .log-entry {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Billion Dollar Cat Rune Forecasting Realtime Database</h1>
+        <div class="row">
+            <div class="col-md-12">
+                <img id="prediction-plot" src="{{ plot_url }}" class="img-fluid" alt="Prediction Plot">
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <h2>Logs</h2>
+                <div class="log-container border p-3">
+                    {% for log_type, log_entries in logs.items() %}
+                        <h5>{{ log_type }}</h5>
+                        {% for log_entry in log_entries %}
+                            <div class="log-entry">
+                                <strong>{{ log_entry.timestamp }}:</strong> {{ log_entry.message }}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Predictions</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-4">Model Predictions</h1>
+        <img src="{{ plot_url }}" alt="Prediction Plot" class="img-fluid mt-4">
+        
+        <h2 class="mt-4">Detailed Predictions</h2>
+        <table class="table table-bordered mt-2">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Prediction</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in detailed_output %}
+                <tr>
+                    <td>{{ item.date }}</td>
+                    <td>{{ item.prediction }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="mt-4">Logs</h2>
+        <div>
+            {% for log_type, log_entries in logs.items() %}
+            <h4>{{ log_type }}</h4>
+            <ul>
+                {% for log in log_entries %}
+                <li>{{ log.timestamp }} - {{ log.message }}</li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
